@@ -345,7 +345,7 @@
             <div class="operations-section">
                 <h3 class="section-title">Управление книгами</h3>
                 <button class="btn btn-success" onclick="openAddBookModal()">Добавить новую книгу</button>
-                <a href="/docs#/Книги/get_api_books_" class="btn" target="_blank">Просмотреть все книги</a>
+                <button class="btn" onclick="openAllBooks()">Просмотреть все книги</button>
                 <button class="btn" onclick="openSearchModal('book')">Найти книгу</button>
                 <button class="btn" onclick="openEditBookModal()">Редактировать книгу</button>
                 <button class="btn btn-danger" onclick="openDeleteBookModal()">Удалить книгу</button>
@@ -355,7 +355,7 @@
             <div class="operations-section">
                 <h3 class="section-title">Управление читателями</h3>
                 <button class="btn btn-success" onclick="openAddReaderModal()">Зарегистрировать читателя</button>
-                <a href="/docs#/Читатели/get_api_readers_" class="btn" target="_blank">Список читателей</a>
+                <button class="btn" onclick="openAllReaders()">Список читателей</button>
                 <button class="btn" onclick="openFindReaderModal()">Найти по номеру билета</button>
                 <button class="btn btn-warning" onclick="openBlockReaderModal()">Заблокировать читателя</button>
                 <button class="btn btn-success" onclick="openActivateReaderModal()">Активировать читателя</button>
@@ -366,16 +366,16 @@
                 <h3 class="section-title">Выдача и возврат книг</h3>
                 <button class="btn btn-success" onclick="openLoanBookModal()">Выдать книгу читателю</button>
                 <button class="btn" onclick="openReturnBookModal()">Принять возврат книги</button>
-                <a href="/docs#/Выдачи/get_api_loans_reader__reader_id__active" class="btn" target="_blank">Активные выдачи читателя</a>
-                <a href="/docs#/Выдачи/get_api_loans_overdue_" class="btn btn-warning" target="_blank">Просроченные выдачи</a>
-                <a href="/docs#/Выдачи/get_api_loans_" class="btn" target="_blank">История всех выдач</a>
+                <button class="btn" onclick="openActiveLoansForReader()">Активные выдачи читателя</button>
+                <button class="btn btn-warning" onclick="openOverdueLoans()">Просроченные выдачи</button>
+                <button class="btn" onclick="openAllLoans()">История всех выдач</button>
             </div>
             
             <!-- Управление экземплярами -->
             <div class="operations-section">
                 <h3 class="section-title">Управление экземплярами</h3>
                 <button class="btn btn-success" onclick="openAddCopyModal()">Добавить экземпляр книги</button>
-                <a href="/docs#/Экземпляры/get_api_copies_" class="btn" target="_blank">Все экземпляры</a>
+                <button class="btn" onclick="openAllCopies()">Все экземпляры</button>
                 <button class="btn" onclick="openAvailableCopiesModal()">Доступные экземпляры книги</button>
                 <button class="btn btn-warning" onclick="openMarkBorrowedModal()">Пометить как выданный</button>
                 <button class="btn btn-success" onclick="openMarkAvailableModal()">Пометить как доступный</button>
@@ -393,11 +393,9 @@
         <!-- Отчеты и статистика -->
         <div class="operations-section" style="margin-top: 2rem;">
             <h3 class="section-title">Отчеты и статистика</h3>
-            <a href="/docs#/Выдачи/get_api_loans_stats_summary" class="btn btn-info" target="_blank">Статистика выдач</a>
-            <a href="/docs#/Выдачи/get_api_loans_overdue_" class="btn btn-warning" target="_blank">Отчет по просрочкам</a>
-            <a href="/docs#/Выдачи/get_api_loans_" class="btn" target="_blank">Полный журнал операций</a>
-            <button class="btn btn-info" onclick="updateStatistics()">Обновить статистику</button>
-        </div>
+            <button class="btn btn-info" onclick="openLoansSummary()">Статистика выдач</button>
+            <button class="btn btn-warning" onclick="openOverdueLoans()">Отчет по просрочкам</button>
+            <button class="btn" onclick="openAllLoans()">Полный журнал операций</button>
         
         <!-- Документация API -->
         <div class="api-docs">
@@ -790,43 +788,691 @@
         
         // Другие модальные окна (упрощенные версии)
         function openSearchModal(type) {
-            const content = `
-                <div>
-                    <p>Для поиска ${type === 'book' ? 'книг' : 'читателей'} перейдите в документацию:</p>
-                    <div style="margin: 1rem 0;">
-                        <a href="/docs#/${type === 'book' ? 'Книги' : 'Читатели'}/get_api_${type === 'book' ? 'books' : 'readers'}_search_" 
-                           target="_blank" class="btn" style="text-align: center;">
-                            Открыть поиск
-                        </a>
+            if (type === 'book') {
+                const content = `
+                    <div>
+                        <p>Поиск книг (по названию или автору):</p>
+                        <form id="bookSearchForm" onsubmit="event.preventDefault(); performBookSearch();">
+                            <div class="form-group">
+                                <input type="text" class="form-input" id="bookSearchQuery" placeholder="Введите название или автора" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-small">Поиск</button>
+                                <button type="button" class="btn btn-small" onclick="closeModal()">Закрыть</button>
+                            </div>
+                        </form>
+                        <div id="bookSearchResults" style="margin-top:1rem;"></div>
                     </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-small" onclick="closeModal()">Закрыть</button>
+                `;
+                openModal('Поиск книг', content);
+            } else {
+                const content = `
+                    <div>
+                        <p>Поиск читателя по номеру билета:</p>
+                        <form id="readerSearchForm" onsubmit="event.preventDefault(); findReaderByCard();">
+                            <div class="form-group">
+                                <input type="text" class="form-input" id="readerCardQuery" placeholder="Номер билета" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-small">Найти</button>
+                                <button type="button" class="btn btn-small" onclick="closeModal()">Закрыть</button>
+                            </div>
+                        </form>
+                        <div id="readerSearchResults" style="margin-top:1rem;"></div>
                     </div>
-                </div>
-            `;
-            openModal(`Поиск ${type === 'book' ? 'книг' : 'читателей'}`, content);
+                `;
+                openModal('Поиск читателя', content);
+            }
         }
         
         function openEditBookModal() {
             const content = `
                 <div>
-                    <p>Для редактирования книги перейдите в документацию:</p>
-                    <div style="margin: 1rem 0;">
-                        <a href="/docs#/Книги/put_api_books__book_id_" 
-                           target="_blank" class="btn" style="text-align: center;">
-                            Открыть редактирование
-                        </a>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-small" onclick="closeModal()">Закрыть</button>
-                    </div>
+                    <p>Редактирование книги по ID:</p>
+                    <form id="editBookIdForm" onsubmit="event.preventDefault(); loadBookForEdit();">
+                        <div class="form-group">
+                            <label class="form-label">ID книги:</label>
+                            <input type="number" class="form-input" id="editBookId" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-small">Загрузить</button>
+                            <button type="button" class="btn btn-small" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                    <div id="editBookContainer" style="margin-top:1rem;"></div>
                 </div>
             `;
             openModal('Редактирование книги', content);
         }
         
-        // Добавьте остальные функции для других модальных окон по аналогии
+        // Функции для реального взаимодействия с API и отображения модалок
+        async function performBookSearch() {
+            const q = document.getElementById('bookSearchQuery').value.trim();
+            const resultsDiv = document.getElementById('bookSearchResults');
+            resultsDiv.innerHTML = '<p>Идет поиск...</p>';
+            try {
+                const resp = await fetch(`/api/books/search/?q=${encodeURIComponent(q)}`);
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    resultsDiv.innerHTML = `<p style="color: #e74c3c;">Ошибка: ${err.detail || resp.statusText}</p>`;
+                    return;
+                }
+                const books = await resp.json();
+                if (!books || books.length === 0) {
+                    resultsDiv.innerHTML = '<p>Ничего не найдено</p>';
+                    return;
+                }
+                let html = '<ul class="list">';
+                books.forEach(b => {
+                    html += `<li class="list-item">${b.id} — <strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author || '')} ` +
+                            `<div class="list-actions">` +
+                            `<button class="btn btn-small" onclick="openBookEditForm(${b.id})">Редактировать</button>` +
+                            `<button class="btn btn-danger btn-small" onclick="deleteBookById(${b.id})">Удалить</button>` +
+                            `</div>` +
+                            `</li>`;
+                });
+                html += '</ul>';
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color:#e74c3c;">Ошибка: ${err.message}</p>`;
+            }
+        }
+
+        async function findReaderByCard() {
+            const card = document.getElementById('readerCardQuery').value.trim();
+            const resultsDiv = document.getElementById('readerSearchResults');
+            resultsDiv.innerHTML = '<p>Идет поиск...</p>';
+            try {
+                const resp = await fetch(`/api/readers/card/${encodeURIComponent(card)}`);
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    resultsDiv.innerHTML = `<p style="color: #e74c3c;">Ошибка: ${err.detail || resp.statusText}</p>`;
+                    return;
+                }
+                const r = await resp.json();
+                resultsDiv.innerHTML = `<div><strong>${escapeHtml(r.full_name)}</strong> (ID: ${r.id}, Билет: ${escapeHtml(r.library_card)})` +
+                                       `<div class="list-actions">` +
+                                       `<button class="btn btn-small" onclick="openBlockReaderModalById(${r.id})">Заблокировать</button>` +
+                                       `<button class="btn btn-small" onclick="activateReaderById(${r.id})">Активировать</button>` +
+                                       `</div></div>`;
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color:#e74c3c;">Ошибка: ${err.message}</p>`;
+            }
+        }
+
+        async function openAllBooks() {
+            openModal('Все книги', '<p>Загрузка...</p>');
+            try {
+                const resp = await fetch('/api/books/?limit=200');
+                if (!resp.ok) {
+                    throw new Error('Ошибка при получении списка книг');
+                }
+                const books = await resp.json();
+                let html = '<ul class="list">';
+                books.forEach(b => {
+                    html += `<li class="list-item">${b.id} — <strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author || '')}` +
+                            `<div class="list-actions">` +
+                            `<button class="btn btn-small" onclick="openBookEditForm(${b.id})">Редактировать</button>` +
+                            `<button class="btn btn-danger btn-small" onclick="deleteBookById(${b.id})">Удалить</button>` +
+                            `</div></li>`;
+                });
+                html += '</ul>';
+                document.getElementById('modalContainer').innerHTML = `
+                    <div class="modal" id="dynamicModal" style="display:block;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Все книги</h3>
+                                <button class="modal-close" onclick="closeModal()">&times;</button>
+                            </div>
+                            <div>${html}</div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('modalContainer').innerHTML = `<div class="modal" style="display:block;"><div class="modal-content"><div class="modal-header"><h3>Ошибка</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div><p style="color:#e74c3c;">${escapeHtml(err.message)}</p></div></div></div>`;
+            }
+        }
+
+        async function openAllReaders() {
+            openModal('Список читателей', '<p>Загрузка...</p>');
+            try {
+                const resp = await fetch('/api/readers/?limit=200');
+                if (!resp.ok) throw new Error('Ошибка при получении читателей');
+                const items = await resp.json();
+                let html = '<ul class="list">';
+                items.forEach(r => {
+                    html += `<li class="list-item">${r.id} — <strong>${escapeHtml(r.full_name)}</strong> — ${escapeHtml(r.library_card)} ` +
+                            `<div class="list-actions">` +
+                            `<button class="btn btn-small" onclick="openBlockReaderModalById(${r.id})">Заблокировать</button>` +
+                            `<button class="btn btn-small" onclick="activateReaderById(${r.id})">Активировать</button>` +
+                            `</div></li>`;
+                });
+                html += '</ul>';
+                document.getElementById('modalContainer').innerHTML = `
+                    <div class="modal" id="dynamicModal" style="display:block;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Читатели</h3>
+                                <button class="modal-close" onclick="closeModal()">&times;</button>
+                            </div>
+                            <div>${html}</div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('modalContainer').innerHTML = `<div class="modal" style="display:block;"><div class="modal-content"><div class="modal-header"><h3>Ошибка</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div><p style="color:#e74c3c;">${escapeHtml(err.message)}</p></div></div></div>`;
+            }
+        }
+
+        async function openAllLoans() {
+            openModal('История выдач', '<p>Загрузка...</p>');
+            try {
+                const resp = await fetch('/api/loans/?limit=200');
+                if (!resp.ok) throw new Error('Ошибка при получении выдач');
+                const items = await resp.json();
+                let html = '<ul class="list">';
+                items.forEach(l => {
+                    html += `<li class="list-item">${l.id} — <strong>${escapeHtml(l.book_title || '—')}</strong> — Читатель: ${escapeHtml(l.reader_name || '—')} — Статус: ${escapeHtml(l.status)} ` +
+                            ` <div class="list-actions">` +
+                            `${l.status === 'active' ? `<button class="btn btn-small" onclick="returnLoanById(${l.id})">Принять возврат</button>` : ''}` +
+                            `</div></li>`;
+                });
+                html += '</ul>';
+                document.getElementById('modalContainer').innerHTML = `
+                    <div class="modal" id="dynamicModal" style="display:block;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>История выдач</h3>
+                                <button class="modal-close" onclick="closeModal()">&times;</button>
+                            </div>
+                            <div>${html}</div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('modalContainer').innerHTML = `<div class="modal" style="display:block;"><div class="modal-content"><div class="modal-header"><h3>Ошибка</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div><p style="color:#e74c3c;">${escapeHtml(err.message)}</p></div></div></div>`;
+            }
+        }
+
+        async function openOverdueLoans() {
+            openModal('Просроченные выдачи', '<p>Загрузка...</p>');
+            try {
+                const resp = await fetch('/api/loans/overdue/');
+                if (!resp.ok) throw new Error('Ошибка при получении просрочек');
+                const items = await resp.json();
+                let html = '<ul class="list">';
+                items.forEach(l => {
+                    html += `<li class="list-item">${l.id} — <strong>${escapeHtml(l.book_title || '—')}</strong> — Читатель: ${escapeHtml(l.reader_name || '—')} — До: ${new Date(l.due_date).toLocaleDateString()} ` +
+                            `</li>`;
+                });
+                html += '</ul>';
+                document.getElementById('modalContainer').innerHTML = `
+                    <div class="modal" id="dynamicModal" style="display:block;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Просроченные выдачи</h3>
+                                <button class="modal-close" onclick="closeModal()">&times;</button>
+                            </div>
+                            <div>${html}</div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('modalContainer').innerHTML = `<div class="modal" style="display:block;"><div class="modal-content"><div class="modal-header"><h3>Ошибка</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div><p style="color:#e74c3c;">${escapeHtml(err.message)}</p></div></div></div>`;
+            }
+        }
+
+        async function openActiveLoansForReader() {
+            const content = `
+                <div>
+                    <p>Показать активные выдачи читателя по ID:</p>
+                    <form onsubmit="event.preventDefault(); loadActiveLoansForReader();">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="activeLoansReaderId" placeholder="ID читателя" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-small" type="submit">Загрузить</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                    <div id="activeLoansResults" style="margin-top:1rem;"></div>
+                </div>
+            `;
+            openModal('Активные выдачи читателя', content);
+        }
+
+        async function loadActiveLoansForReader() {
+            const id = document.getElementById('activeLoansReaderId').value;
+            const resultsDiv = document.getElementById('activeLoansResults');
+            resultsDiv.innerHTML = '<p>Загрузка...</p>';
+            try {
+                const resp = await fetch(`/api/loans/reader/${id}/active`);
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    resultsDiv.innerHTML = `<p style="color:#e74c3c;">Ошибка: ${err.detail || resp.statusText}</p>`;
+                    return;
+                }
+                const items = await resp.json();
+                if (!items.length) {
+                    resultsDiv.innerHTML = '<p>Нет активных выдач</p>';
+                    return;
+                }
+                let html = '<ul class="list">';
+                items.forEach(l => {
+                    html += `<li class="list-item">${l.id} — <strong>${escapeHtml(l.book_title || '—')}</strong> — До: ${new Date(l.due_date).toLocaleDateString()} ` +
+                            ` <div class="list-actions"><button class="btn btn-small" onclick="returnLoanById(${l.id})">Принять возврат</button></div></li>`;
+                });
+                html += '</ul>';
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color:#e74c3c;">Ошибка: ${err.message}</p>`;
+            }
+        }
+
+        async function openLoansSummary() {
+            openModal('Статистика выдач', '<p>Загрузка...</p>');
+            try {
+                const resp = await fetch('/api/loans/stats/summary');
+                if (!resp.ok) throw new Error('Ошибка при получении статистики');
+                const s = await resp.json();
+                const html = `
+                    <div>
+                        <p><strong>Всего выдач:</strong> ${s.total_loans}</p>
+                        <p><strong>Активных:</strong> ${s.active_loans}</p>
+                        <p><strong>Просроченных:</strong> ${s.overdue_loans}</p>
+                        <p><strong>Возвращенных:</strong> ${s.returned_loans}</p>
+                    </div>
+                `;
+                document.getElementById('modalContainer').innerHTML = `
+                    <div class="modal" id="dynamicModal" style="display:block;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Статистика выдач</h3>
+                                <button class="modal-close" onclick="closeModal()">&times;</button>
+                            </div>
+                            <div>${html}</div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('modalContainer').innerHTML = `<div class="modal" style="display:block;"><div class="modal-content"><div class="modal-header"><h3>Ошибка</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div><p style="color:#e74c3c;">${escapeHtml(err.message)}</p></div></div></div>`;
+            }
+        }
+
+        // --- Экземпляры: модалки и взаимодействие с API ---
+        function openAddCopyModal() {
+            const content = `
+                <div>
+                    <p>Добавить новый экземпляр книги:</p>
+                    <form id="addCopyForm" onsubmit="event.preventDefault(); addCopy();">
+                        <div class="form-group">
+                            <label class="form-label">ID книги:</label>
+                            <input type="number" class="form-input" id="copyBookId" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Инвентарный номер:</label>
+                            <input type="text" class="form-input" id="copyInventory" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Статус:</label>
+                            <select id="copyStatus" class="form-input">
+                                <option value="available">available</option>
+                                <option value="borrowed">borrowed</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-success btn-small" type="submit">Добавить</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Добавить экземпляр книги', content);
+        }
+
+        async function addCopy() {
+            const bookId = parseInt(document.getElementById('copyBookId').value);
+            const inventory = document.getElementById('copyInventory').value.trim();
+            const status = document.getElementById('copyStatus').value;
+            try {
+                const resp = await fetch('/api/copies/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ book_id: bookId, inventory_number: inventory, status })
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert('Ошибка: ' + (err.detail || resp.statusText));
+                    return;
+                }
+                const created = await resp.json();
+                alert(`Экземпляр создан: ${created.book_title} (${created.inventory_number})`);
+                closeModal();
+                loadStatistics();
+            } catch (err) { alert('Ошибка сети: ' + err.message); }
+        }
+
+        async function openAllCopies() {
+            openModal('Все экземпляры', '<p>Загрузка...</p>');
+            try {
+                const resp = await fetch('/api/copies/?limit=500');
+                if (!resp.ok) throw new Error('Ошибка при получении экземпляров');
+                const items = await resp.json();
+                let html = '<ul class="list">';
+                items.forEach(c => {
+                    html += `<li class="list-item">${c.id} — ${escapeHtml(c.book_title || '—')} — Инв.№ ${escapeHtml(c.inventory_number)} — Статус: ${escapeHtml(c.status)}` +
+                            `<div class="list-actions">` +
+                            `${c.status === 'available' ? `<button class="btn btn-small" onclick="markCopyBorrowed(${c.id})">Пометить выданным</button>` : `<button class="btn btn-small" onclick="markCopyAvailable(${c.id})">Пометить доступным</button>`}` +
+                            `<button class="btn btn-danger btn-small" onclick="deleteCopyById(${c.id})">Удалить</button>` +
+                            `</div></li>`;
+                });
+                html += '</ul>';
+                document.getElementById('modalContainer').innerHTML = `
+                    <div class="modal" id="dynamicModal" style="display:block;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Все экземпляры</h3>
+                                <button class="modal-close" onclick="closeModal()">&times;</button>
+                            </div>
+                            <div>${html}</div>
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById('modalContainer').innerHTML = `<div class="modal" style="display:block;"><div class="modal-content"><div class="modal-header"><h3>Ошибка</h3><button class="modal-close" onclick="closeModal()">&times;</button></div><div><p style="color:#e74c3c;">${escapeHtml(err.message)}</p></div></div></div>`;
+            }
+        }
+
+        function openAvailableCopiesModal() {
+            const content = `
+                <div>
+                    <p>Показать доступные экземпляры по ID книги:</p>
+                    <form onsubmit="event.preventDefault(); loadAvailableCopiesForBook();">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="availableCopiesBookId" placeholder="ID книги" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-small" type="submit">Загрузить</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                    <div id="availableCopiesResults" style="margin-top:1rem;"></div>
+                </div>
+            `;
+            openModal('Доступные экземпляры книги', content);
+        }
+
+        async function loadAvailableCopiesForBook() {
+            const id = document.getElementById('availableCopiesBookId').value;
+            const resultsDiv = document.getElementById('availableCopiesResults');
+            resultsDiv.innerHTML = '<p>Загрузка...</p>';
+            try {
+                const resp = await fetch(`/api/copies/book/${id}/available`);
+                if (!resp.ok) { const err = await resp.json(); resultsDiv.innerHTML = `<p style="color:#e74c3c;">Ошибка: ${err.detail || resp.statusText}</p>`; return; }
+                const items = await resp.json();
+                if (!items.length) { resultsDiv.innerHTML = '<p>Нет доступных экземпляров</p>'; return; }
+                let html = '<ul class="list">';
+                items.forEach(c => {
+                    html += `<li class="list-item">${c.id} — ${escapeHtml(c.book_title || '—')} — Инв.№ ${escapeHtml(c.inventory_number)} ` +
+                            `<div class="list-actions"><button class="btn btn-small" onclick="markCopyBorrowed(${c.id})">Пометить выданным</button></div></li>`;
+                });
+                html += '</ul>';
+                resultsDiv.innerHTML = html;
+            } catch (err) { resultsDiv.innerHTML = `<p style="color:#e74c3c;">Ошибка: ${err.message}</p>`; }
+        }
+
+        function openMarkBorrowedModal() {
+            const content = `
+                <div>
+                    <p>Пометить экземпляр как выданный (по ID):</p>
+                    <form onsubmit="event.preventDefault(); markCopyBorrowed(document.getElementById('markBorrowedId').value);">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="markBorrowedId" placeholder="ID экземпляра" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-warning btn-small" type="submit">Пометить выданным</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Пометить как выданный', content);
+        }
+
+        async function markCopyBorrowed(id) {
+            id = parseInt(id);
+            try {
+                const resp = await fetch(`/api/copies/${id}/mark-borrowed`, { method: 'PATCH' });
+                if (!resp.ok) { const err = await resp.json(); alert('Ошибка: ' + (err.detail || resp.statusText)); return; }
+                const res = await resp.json();
+                alert(`Экземпляр ${res.inventory_number} помечен как выданный`);
+                closeModal();
+                loadStatistics();
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        function openMarkAvailableModal() {
+            const content = `
+                <div>
+                    <p>Пометить экземпляр как доступный (по ID):</p>
+                    <form onsubmit="event.preventDefault(); markCopyAvailable(document.getElementById('markAvailableId').value);">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="markAvailableId" placeholder="ID экземпляра" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-success btn-small" type="submit">Пометить доступным</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Пометить как доступный', content);
+        }
+
+        async function markCopyAvailable(id) {
+            id = parseInt(id);
+            try {
+                const resp = await fetch(`/api/copies/${id}/mark-available`, { method: 'PATCH' });
+                if (!resp.ok) { const err = await resp.json(); alert('Ошибка: ' + (err.detail || resp.statusText)); return; }
+                const res = await resp.json();
+                alert(`Экземпляр ${res.inventory_number} помечен как доступный`);
+                closeModal();
+                loadStatistics();
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        async function deleteCopyById(id) {
+            if (!confirm('Удалить экземпляр ID ' + id + '?')) return;
+            try {
+                const resp = await fetch(`/api/copies/${id}`, { method: 'DELETE' });
+                if (resp.status === 204) { alert('Экземпляр удалён'); closeModal(); } else { const err = await resp.json(); alert('Ошибка: ' + (err.detail || resp.statusText)); }
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // CRUD helpers for books
+        async function openBookEditForm(bookId) {
+            // open inline edit form for bookId
+            try {
+                const resp = await fetch(`/api/books/${bookId}`);
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert(`Ошибка: ${err.detail || resp.statusText}`);
+                    return;
+                }
+                const b = await resp.json();
+                const formHtml = `
+                    <form id="editBookForm" onsubmit="event.preventDefault(); submitBookEdit(${b.id});">
+                        <div class="form-group"><label class="form-label">Название</label><input class="form-input" id="editTitle" value="${escapeHtml(b.title)}" required></div>
+                        <div class="form-group"><label class="form-label">Автор</label><input class="form-input" id="editAuthor" value="${escapeHtml(b.author || '')}"></div>
+                        <div class="form-group"><label class="form-label">Год</label><input type="number" class="form-input" id="editYear" value="${b.year || ''}"></div>
+                        <div class="form-actions"><button class="btn btn-success" type="submit">Сохранить</button> <button class="btn btn-small" type="button" onclick="closeModal()">Закрыть</button></div>
+                    </form>
+                `;
+                openModal(`Редактирование: ${escapeHtml(b.title)}`, formHtml);
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        }
+
+        async function loadBookForEdit() {
+            const id = document.getElementById('editBookId').value;
+            openBookEditForm(id);
+        }
+
+        async function submitBookEdit(bookId) {
+            const title = document.getElementById('editTitle').value.trim();
+            const author = document.getElementById('editAuthor').value.trim();
+            const year = document.getElementById('editYear').value;
+            try {
+                const resp = await fetch(`/api/books/${bookId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ title, author, year: year ? parseInt(year) : null })
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert(`Ошибка: ${err.detail || resp.statusText}`);
+                    return;
+                }
+                const updated = await resp.json();
+                alert(`Книга обновлена: ${updated.title}`);
+                closeModal();
+                loadStatistics();
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        }
+
+        async function deleteBookById(bookId) {
+            if (!confirm('Удалить книгу ID ' + bookId + '?')) return;
+            try {
+                const resp = await fetch(`/api/books/${bookId}`, { method: 'DELETE' });
+                if (resp.status === 204) {
+                    alert('Книга удалена');
+                    closeModal();
+                } else {
+                    const err = await resp.json();
+                    alert('Ошибка: ' + (err.detail || resp.statusText));
+                }
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        }
+
+        // Reader helpers
+        async function openBlockReaderModalById(id) {
+            try {
+                const resp = await fetch(`/api/readers/${id}/block`, { method: 'PATCH' });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert('Ошибка: ' + (err.detail || resp.statusText));
+                    return;
+                }
+                const r = await resp.json();
+                alert(`Читатель ${r.full_name} заблокирован`);
+                closeModal();
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        async function activateReaderById(id) {
+            try {
+                const resp = await fetch(`/api/readers/${id}/activate`, { method: 'PATCH' });
+                if (!resp.ok) { const err = await resp.json(); alert('Ошибка: ' + (err.detail || resp.statusText)); return; }
+                const r = await resp.json();
+                alert(`Читатель ${r.full_name} активирован`);
+                closeModal();
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        // Return helpers
+        async function openReturnBookModal() {
+            const content = `
+                <div>
+                    <p>Принять возврат по ID выдачи:</p>
+                    <form onsubmit="event.preventDefault(); returnLoan();">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="returnLoanId" placeholder="ID выдачи" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-small" type="submit">Принять возврат</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Принять возврат', content);
+        }
+
+        async function returnLoan() {
+            const id = document.getElementById('returnLoanId').value;
+            try {
+                const resp = await fetch(`/api/loans/return/${id}`, { method: 'POST' });
+                if (!resp.ok) { const err = await resp.json(); alert('Ошибка: ' + (err.detail || resp.statusText)); return; }
+                const res = await resp.json();
+                alert(`Выдача ${res.id} закрыта, экземпляр ${res.copy_inventory} возвращен`);
+                closeModal();
+                loadStatistics();
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        async function returnLoanById(id) {
+            if (!confirm('Принять возврат по выдаче ID ' + id + '?')) return;
+            try {
+                const resp = await fetch(`/api/loans/return/${id}`, { method: 'POST' });
+                if (!resp.ok) { const err = await resp.json(); alert('Ошибка: ' + (err.detail || resp.statusText)); return; }
+                const res = await resp.json();
+                alert('Возврат принят');
+                closeModal();
+                loadStatistics();
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
         
+        // Утилитарные модалки: удалить/поиск/активация
+        function openDeleteBookModal() {
+            const content = `
+                <div>
+                    <p>Удалить книгу по ID:</p>
+                    <form onsubmit="event.preventDefault(); deleteBookById(document.getElementById('delBookId').value);">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="delBookId" placeholder="ID книги" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-danger btn-small" type="submit">Удалить</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Удаление книги', content);
+        }
+
+        function openFindReaderModal() {
+            // просто вызывает тот же модал поиска по билету
+            openSearchModal('reader');
+        }
+
+        function openActivateReaderModal() {
+            const content = `
+                <div>
+                    <p>Активировать читателя по ID:</p>
+                    <form onsubmit="event.preventDefault(); activateReaderById(document.getElementById('activateReaderId').value);">
+                        <div class="form-group">
+                            <input type="number" class="form-input" id="activateReaderId" placeholder="ID читателя" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-success btn-small" type="submit">Активировать</button>
+                            <button class="btn btn-small" type="button" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Активировать читателя', content);
+        }
+
         // Загрузка статистики при открытии страницы
         document.addEventListener('DOMContentLoaded', loadStatistics);
         

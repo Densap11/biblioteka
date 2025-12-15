@@ -20,4 +20,5 @@ RUN if [ ! -f "templates/index.html" ]; then echo "<h1>Библиотечная 
 EXPOSE 8000
 
 # Команда запуска
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Если переменная окружения DEBUG установлена в True, включаем --reload для автоматического обновления при изменениях
+CMD ["sh", "-c", "if [ \"$DEBUG\" = \"True\" ]; then exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload; else exec uvicorn app.main:app --host 0.0.0.0 --port 8000; fi"]

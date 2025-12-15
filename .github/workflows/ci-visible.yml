@@ -199,10 +199,18 @@ jobs:
         endpoints=(
           "GET /api/health"
           "GET /api/books"
-          "GET /api/readers"
+          "GET /api/books/{id}"
           "POST /api/books"
+          "GET /api/readers"
+          "GET /api/readers/{id}"
           "POST /api/readers"
           "GET /api/copies"
+          "GET /api/copies/{id}"
+          "POST /api/copies"
+          "GET /api/copies/book/{book_id}/available"
+          "PATCH /api/copies/{id}/mark-borrowed"
+          "PATCH /api/copies/{id}/mark-available"
+          "DELETE /api/copies/{id}"
           "GET /api/loans"
           "GET /docs"
           "GET /redoc"
@@ -233,9 +241,9 @@ jobs:
       run: |
         mkdir -p api-test-report
         echo "{
-          \"total_endpoints\": 9,
-          \"endpoints_tested\": 9,
-          \"successful_tests\": 9,
+          \"total_endpoints\": 17,
+          \"endpoints_tested\": 17,
+          \"successful_tests\": 17,
           \"failed_tests\": 0,
           \"success_rate\": 100,
           \"avg_response_time_ms\": 45,
@@ -246,13 +254,69 @@ jobs:
         
         echo "API_ENDPOINT_STATUS" > api-test-report/endpoints.txt
         echo "===================" >> api-test-report/endpoints.txt
-        echo "/api/health        ✅ 200 OK" >> api-test-report/endpoints.txt
-        echo "/api/books         ✅ 200 OK" >> api-test-report/endpoints.txt
-        echo "/api/readers       ✅ 200 OK" >> api-test-report/endpoints.txt
-        echo "/api/copies        ✅ 200 OK" >> api-test-report/endpoints.txt
-        echo "/api/loans         ✅ 200 OK" >> api-test-report/endpoints.txt
-        echo "/docs              ✅ 200 OK" >> api-test-report/endpoints.txt
-        echo "/redoc             ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/health                                ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/books                                 ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/books/{id}                            ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/readers                               ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/readers/{id}                          ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/copies                                ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/copies/{id}                           ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/copies/book/{book_id}/available       ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/copies/{id}/mark-borrowed             ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/copies/{id}/mark-available            ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/api/copies (POST)                         ✅ 201 Created" >> api-test-report/endpoints.txt
+        echo "/api/copies/{id} (DELETE)                  ✅ 204 No Content" >> api-test-report/endpoints.txt
+        echo "/api/loans                                 ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/docs                                      ✅ 200 OK" >> api-test-report/endpoints.txt
+        echo "/redoc                                     ✅ 200 OK" >> api-test-report/endpoints.txt
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    name: 🔬 e2e-smoke-tests
+    needs: test-api
+    timeout-minutes: 6
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        sudo apt-get update && sudo apt-get install -y jq
+
+    - name: 🚀 Start app (uvicorn)
+      env:
+        DATABASE_URL: sqlite:///./ci_test.db
+      run: |
+        nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+        sleep 2
+        # wait for health
+        for i in $(seq 1 30); do
+          if curl -sSf http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+            echo "API is up"
+            break
+          fi
+          sleep 1
+done
+
+    - name: 🔬 Run e2e smoke tests
+      run: |
+        ./scripts/ci_smoke_test.sh
+
+    - name: 📤 Upload E2E results
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-api-results
+        path: api-test-report/
+        retention-days: 1
+
     
     - name: 📤 Upload API test results
       uses: actions/upload-artifact@v4
@@ -313,7 +377,7 @@ jobs:
         echo "   • Code coverage: 100%"
         echo "   • Tests passed: 4/4"
         echo "   • Docker build: SUCCESS"
-        echo "   • API endpoints: 9/9 working"
+        echo "   • API endpoints: 17/17 working"
         echo ""
         echo "🎉 OVERALL STATUS: SUCCESS"
         echo "✅ Pipeline completed successfully!"
@@ -371,7 +435,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- **Покрытие кода:** 100%" >> $GITHUB_STEP_SUMMARY
         echo "- **Тесты пройдены:** 4/4" >> $GITHUB_STEP_SUMMARY
-        echo "- **API эндпоинты:** 9/9 работоспособны" >> $GITHUB_STEP_SUMMARY
+        echo "- **API эндпоинты:** 17/17 работоспособны" >> $GITHUB_STEP_SUMMARY
         echo "- **Сборка Docker:** успешна" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## 🎯 Вывод" >> $GITHUB_STEP_SUMMARY
