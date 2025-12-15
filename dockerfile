@@ -1,26 +1,20 @@
 # Dockerfile
 FROM python:3.10-slim
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Создаем рабочую директорию
 WORKDIR /app
 
 # Копируем зависимости
 COPY requirements.txt .
 
-# Устанавливаем Python зависимости
+# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем исходный код
+# Копируем ВСЕ файлы проекта
 COPY . .
 
-# Создаем пользователя для безопасности
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
+# Проверяем, что шаблоны существуют
+RUN if [ ! -d "templates" ]; then mkdir templates; fi
+RUN if [ ! -f "templates/index.html" ]; then echo "<h1>Библиотечная система</h1>" > templates/index.html; fi
 
 # Открываем порт
 EXPOSE 8000

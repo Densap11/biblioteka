@@ -1,82 +1,110 @@
 # .github/workflows/ci.yml
-name: CI/CD Pipeline
+name: Continuous Integration
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/* ]
   pull_request:
     branches: [ main ]
 
 jobs:
+  # Тестирование и проверка кода
   test:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: test_library_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
-    
+        python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov
-    
-    - name: Run tests
-      env:
-        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_library_db
-        SECRET_KEY: test-secret-key
+        pip install pytest pytest-cov flake8 black
+
+    - name: Check code formatting with Black
+      run: |
+        black --check app/
+
+    - name: Lint with flake8
+      run: |
+        flake8 app/ --count --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run tests with pytest
       run: |
         pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
-    
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
 
-  build:
+  # Проверка Docker сборки
+  docker-build:
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main'
-    
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-    
-    - name: Login to DockerHub
-      uses: docker/login-action@v2
+
+    - name: Build Docker image
+      run: |
+        docker build -t library-system:latest .
+
+    - name: Run container tests
+      run: |
+        docker run --rm library-system:latest python -c "import sys; from app.main import app; print('✅ FastAPI app loaded successfully')"
+
+  # Проверка API
+  api-test:
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/library-system:latest
-          ${{ secrets.DOCKER_USERNAME }}/library-system:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Start FastAPI server in background
+      run: |
+        nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
+        sleep 10  # Ждем запуска сервера
+
+    - name: Test API endpoints
+      run: |
+        # Проверяем здоровье приложения
+        curl -f http://localhost:8000/api/health || exit 1
+        
+        # Проверяем основные эндпоинты
+        curl -f http://localhost:8000/api/books || exit 1
+        curl -f http://localhost:8000/api/readers || exit 1
+        
+        echo "✅ Все API эндпоинты работают корректно"
+
+    - name: Stop FastAPI server
+      run: |
+        pkill -f uvicorn

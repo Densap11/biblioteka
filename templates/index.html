@@ -9,170 +9,846 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 800px;
-            width: 100%;
-            text-align: center;
-        }
-        
-        h1 {
+            background-color: #f5f5f5;
             color: #333;
-            margin-bottom: 20px;
-            font-size: 2.5rem;
+            line-height: 1.6;
         }
         
-        .status {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #28a745;
-        }
-        
-        .endpoints {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        .endpoint-card {
-            background: #f1f3f5;
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            text-decoration: none;
-            color: #333;
-        }
-        
-        .endpoint-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            background: #e9ecef;
-        }
-        
-        .endpoint-card h3 {
-            color: #495057;
-            margin-bottom: 10px;
-        }
-        
-        .endpoint-card p {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #28a745;
+        .header {
+            background-color: #2c3e50;
             color: white;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            margin-top: 10px;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
-        .api-docs {
-            margin-top: 30px;
-            padding: 15px;
-            background: #e7f5ff;
-            border-radius: 10px;
-        }
-        
-        .api-docs a {
-            color: #228be6;
-            text-decoration: none;
+        .logo {
+            font-size: 1.5rem;
             font-weight: bold;
         }
         
-        .api-docs a:hover {
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .stats-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .operations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .operations-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #ecf0f1;
+            font-size: 1.2rem;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-info {
+            background-color: #9b59b6;
+        }
+        
+        .btn-info:hover {
+            background-color: #8e44ad;
+        }
+        
+        .recent-activity {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .activity-list {
+            list-style: none;
+        }
+        
+        .activity-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-time {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .quick-search {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .search-btn {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .search-btn:hover {
+            background-color: #1a252f;
+        }
+        
+        .api-docs {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #ecf0f1;
+            border-radius: 8px;
+        }
+        
+        .api-link {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .api-link:hover {
             text-decoration: underline;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            border-top: 1px solid #ecf0f1;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 0.5rem;
+            }
+            
+            .operations-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+            }
+            
+            .logo {
+                margin-bottom: 0.5rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📚 Библиотечная система</h1>
-        
-        <div class="status">
-            <h2>Система работает ✅</h2>
-            <p>Версия: {{ app_name }} v1.0.0</p>
-            <p>База данных: SQLite</p>
-            <p>Статус: <span style="color: green;">● Онлайн</span></p>
+    <div class="header">
+        <div class="logo">Библиотечная система</div>
+        <div>Текущий пользователь: Библиотекарь</div>
+    </div>
+    
+    <div class="main-container">
+        <!-- Статистика -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="books-count">--</div>
+                <div class="stat-label">Всего книг</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="readers-count">--</div>
+                <div class="stat-label">Читателей</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="active-loans">--</div>
+                <div class="stat-label">Активных выдач</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="overdue-count">--</div>
+                <div class="stat-label">Просрочено</div>
+            </div>
         </div>
         
-        <h2>Доступные эндпоинты API</h2>
-        
-        <div class="endpoints">
-            <a href="/api/health" class="endpoint-card">
-                <h3>Health Check</h3>
-                <p>Проверка состояния системы</p>
-                <span class="badge">GET /api/health</span>
-            </a>
+        <!-- Основные операции -->
+        <div class="operations-grid">
+            <!-- Управление книгами -->
+            <div class="operations-section">
+                <h3 class="section-title">Управление книгами</h3>
+                <button class="btn btn-success" onclick="openAddBookModal()">Добавить новую книгу</button>
+                <a href="/docs#/Книги/get_api_books_" class="btn" target="_blank">Просмотреть все книги</a>
+                <button class="btn" onclick="openSearchModal('book')">Найти книгу</button>
+                <button class="btn" onclick="openEditBookModal()">Редактировать книгу</button>
+                <button class="btn btn-danger" onclick="openDeleteBookModal()">Удалить книгу</button>
+            </div>
             
-            <a href="/api/books" class="endpoint-card">
-                <h3>Список книг</h3>
-                <p>Получить все книги из базы</p>
-                <span class="badge">GET /api/books</span>
-            </a>
+            <!-- Управление читателями -->
+            <div class="operations-section">
+                <h3 class="section-title">Управление читателями</h3>
+                <button class="btn btn-success" onclick="openAddReaderModal()">Зарегистрировать читателя</button>
+                <a href="/docs#/Читатели/get_api_readers_" class="btn" target="_blank">Список читателей</a>
+                <button class="btn" onclick="openFindReaderModal()">Найти по номеру билета</button>
+                <button class="btn btn-warning" onclick="openBlockReaderModal()">Заблокировать читателя</button>
+                <button class="btn btn-success" onclick="openActivateReaderModal()">Активировать читателя</button>
+            </div>
             
-            <a href="/api/test-db" class="endpoint-card">
-                <h3>Тест БД</h3>
-                <p>Проверка подключения к базе</p>
-                <span class="badge">GET /api/test-db</span>
-            </a>
+            <!-- Выдача и возврат -->
+            <div class="operations-section">
+                <h3 class="section-title">Выдача и возврат книг</h3>
+                <button class="btn btn-success" onclick="openLoanBookModal()">Выдать книгу читателю</button>
+                <button class="btn" onclick="openReturnBookModal()">Принять возврат книги</button>
+                <a href="/docs#/Выдачи/get_api_loans_reader__reader_id__active" class="btn" target="_blank">Активные выдачи читателя</a>
+                <a href="/docs#/Выдачи/get_api_loans_overdue_" class="btn btn-warning" target="_blank">Просроченные выдачи</a>
+                <a href="/docs#/Выдачи/get_api_loans_" class="btn" target="_blank">История всех выдач</a>
+            </div>
             
-            <a href="/api/models-check" class="endpoint-card">
-                <h3>Проверка моделей</h3>
-                <p>Статус загрузки моделей</p>
-                <span class="badge">GET /api/models-check</span>
-            </a>
+            <!-- Управление экземплярами -->
+            <div class="operations-section">
+                <h3 class="section-title">Управление экземплярами</h3>
+                <button class="btn btn-success" onclick="openAddCopyModal()">Добавить экземпляр книги</button>
+                <a href="/docs#/Экземпляры/get_api_copies_" class="btn" target="_blank">Все экземпляры</a>
+                <button class="btn" onclick="openAvailableCopiesModal()">Доступные экземпляры книги</button>
+                <button class="btn btn-warning" onclick="openMarkBorrowedModal()">Пометить как выданный</button>
+                <button class="btn btn-success" onclick="openMarkAvailableModal()">Пометить как доступный</button>
+            </div>
         </div>
         
+        <!-- Быстрый поиск -->
+        <div class="quick-search">
+            <h3 class="section-title">Быстрый поиск</h3>
+            <input type="text" class="search-input" id="searchInput" placeholder="Введите название книги, автора или имя читателя">
+            <button class="search-btn" onclick="performSearch()">Найти</button>
+            <div id="searchResults" style="margin-top: 1rem;"></div>
+        </div>
+        
+        <!-- Отчеты и статистика -->
+        <div class="operations-section" style="margin-top: 2rem;">
+            <h3 class="section-title">Отчеты и статистика</h3>
+            <a href="/docs#/Выдачи/get_api_loans_stats_summary" class="btn btn-info" target="_blank">Статистика выдач</a>
+            <a href="/docs#/Выдачи/get_api_loans_overdue_" class="btn btn-warning" target="_blank">Отчет по просрочкам</a>
+            <a href="/docs#/Выдачи/get_api_loans_" class="btn" target="_blank">Полный журнал операций</a>
+            <button class="btn btn-info" onclick="updateStatistics()">Обновить статистику</button>
+        </div>
+        
+        <!-- Документация API -->
         <div class="api-docs">
-            <h3>📖 Документация API</h3>
-            <p>Полная документация доступна по ссылкам:</p>
+            <p>Для выполнения операций используйте интерактивную документацию:</p>
             <p>
-                <a href="/docs" target="_blank">Swagger UI документация</a> |
-                <a href="/redoc" target="_blank">ReDoc документация</a>
+                <a href="/docs" class="api-link" target="_blank">Открыть документацию API</a> | 
+                <a href="/redoc" class="api-link" target="_blank">Альтернативная документация</a>
             </p>
         </div>
         
-        <div style="margin-top: 30px; color: #6c757d; font-size: 0.9rem;">
-            <p>Курсовая работа: "Разработка информационной системы управления библиотечным фондом"</p>
-            <p>Система включает: управление книгами, читателями, выдачами и сотрудниками</p>
+        <!-- Активность -->
+        <div class="recent-activity">
+            <h3 class="section-title">Последние операции</h3>
+            <ul class="activity-list" id="activityList">
+                <li class="activity-item">
+                    <span>Загрузка истории операций...</span>
+                    <span class="activity-time">--:--</span>
+                </li>
+            </ul>
         </div>
     </div>
     
+    <div class="footer">
+        Библиотечная система версия 1.0.0
+    </div>
+    
+    <!-- Модальные окна -->
+    <div id="modalContainer"></div>
+    
     <script>
-        // Простой JavaScript для динамического обновления статуса
-        async function checkHealth() {
+        // Функция для загрузки статистики
+        async function loadStatistics() {
             try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-                console.log('Система работает:', data);
+                // Загрузка количества книг
+                const booksResponse = await fetch('/api/books');
+                const booksData = await booksResponse.json();
+                document.getElementById('books-count').textContent = booksData.count || '0';
+                
+                // Загрузка количества читателей
+                const readersResponse = await fetch('/api/readers');
+                const readersData = await readersResponse.json();
+                document.getElementById('readers-count').textContent = readersData.length || '0';
+                
+                // Загрузка статистики выдач
+                const loansResponse = await fetch('/api/loans/stats/summary');
+                const loansData = await loansResponse.json();
+                document.getElementById('active-loans').textContent = loansData.active_loans || '0';
+                document.getElementById('overdue-count').textContent = loansData.overdue_loans || '0';
+                
+                // Загрузка последних выдач
+                const recentLoansResponse = await fetch('/api/loans?limit=5');
+                const recentLoans = await recentLoansResponse.json();
+                
+                const activityList = document.getElementById('activityList');
+                activityList.innerHTML = '';
+                
+                if (recentLoans.length === 0) {
+                    activityList.innerHTML = '<li class="activity-item">Операций пока нет</li>';
+                } else {
+                    recentLoans.forEach(loan => {
+                        const item = document.createElement('li');
+                        item.className = 'activity-item';
+                        
+                        let statusText = '';
+                        let bookTitle = loan.book_title || 'Книга';
+                        let readerName = loan.reader_name || 'Читатель';
+                        
+                        if (loan.status === 'active') {
+                            statusText = `Выдача: ${bookTitle} → ${readerName}`;
+                        } else if (loan.status === 'returned') {
+                            statusText = `Возврат: ${bookTitle} от ${readerName}`;
+                        } else {
+                            statusText = `Операция: ${bookTitle} с ${readerName}`;
+                        }
+                        
+                        item.innerHTML = `
+                            <span>${statusText}</span>
+                            <span class="activity-time">${new Date(loan.loan_date).toLocaleDateString()}</span>
+                        `;
+                        activityList.appendChild(item);
+                    });
+                }
+                
             } catch (error) {
-                console.error('Ошибка проверки:', error);
+                console.error('Ошибка загрузки статистики:', error);
+                document.getElementById('books-count').textContent = 'Ошибка';
+                document.getElementById('readers-count').textContent = 'Ошибка';
+                document.getElementById('active-loans').textContent = 'Ошибка';
+                document.getElementById('overdue-count').textContent = 'Ошибка';
             }
         }
         
-        // Проверяем при загрузке страницы
-        document.addEventListener('DOMContentLoaded', checkHealth);
+        // Функция для обновления статистики
+        function updateStatistics() {
+            loadStatistics();
+            alert('Статистика обновлена');
+        }
+        
+        // Функция для поиска
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<p style="color: #e74c3c;">Введите поисковый запрос</p>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<p>Поиск...</p>';
+            
+            try {
+                // Поиск книг
+                const booksResponse = await fetch(`/api/books/search/?q=${encodeURIComponent(query)}`);
+                const books = await booksResponse.json();
+                
+                let resultsHtml = '';
+                
+                if (books.length > 0) {
+                    resultsHtml += '<h4>Найденные книги:</h4>';
+                    books.forEach(book => {
+                        resultsHtml += `
+                            <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                                <strong>${book.title}</strong> (${book.author})<br>
+                                <small>ID: ${book.id}, Жанр: ${book.genre || 'не указан'}, Год: ${book.year || 'не указан'}</small>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultsHtml += '<p>Книги не найдены</p>';
+                }
+                
+                resultsDiv.innerHTML = resultsHtml;
+                
+            } catch (error) {
+                console.error('Ошибка поиска:', error);
+                resultsDiv.innerHTML = '<p style="color: #e74c3c;">Ошибка при выполнении поиска</p>';
+            }
+        }
+        
+        // Модальные окна
+        function openModal(title, content) {
+            const modalHtml = `
+                <div class="modal" id="dynamicModal" style="display: block;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>${title}</h3>
+                            <button class="modal-close" onclick="closeModal()">&times;</button>
+                        </div>
+                        <div>${content}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modalContainer').innerHTML = modalHtml;
+        }
+        
+        function closeModal() {
+            document.getElementById('modalContainer').innerHTML = '';
+        }
+        
+        // Модальные окна для операций
+        function openAddBookModal() {
+            const content = `
+                <div>
+                    <p>Чтобы добавить книгу, откройте документацию API:</p>
+                    <div style="margin: 1rem 0;">
+                        <a href="/docs#/Книги/post_api_books_" target="_blank" class="btn btn-success" style="text-align: center;">
+                            Открыть форму добавления книги
+                        </a>
+                    </div>
+                    <p>Или используйте форму ниже:</p>
+                    <form id="addBookForm" onsubmit="event.preventDefault(); addBook();">
+                        <div class="form-group">
+                            <label class="form-label">Название книги:</label>
+                            <input type="text" class="form-input" id="bookTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Автор:</label>
+                            <input type="text" class="form-input" id="bookAuthor" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Год издания:</label>
+                            <input type="number" class="form-input" id="bookYear">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success btn-small">Добавить</button>
+                            <button type="button" class="btn btn-small" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Добавление новой книги', content);
+        }
+        
+        async function addBook() {
+            const title = document.getElementById('bookTitle').value;
+            const author = document.getElementById('bookAuthor').value;
+            const year = document.getElementById('bookYear').value;
+            
+            try {
+                const response = await fetch('/api/books/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        author: author,
+                        year: year ? parseInt(year) : null
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Книга "${result.title}" успешно добавлена! ID: ${result.id}`);
+                    closeModal();
+                    loadStatistics();
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.detail || 'Не удалось добавить книгу'}`);
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        }
+        
+        function openAddReaderModal() {
+            const content = `
+                <div>
+                    <p>Зарегистрировать нового читателя:</p>
+                    <form id="addReaderForm" onsubmit="event.preventDefault(); addReader();">
+                        <div class="form-group">
+                            <label class="form-label">ФИО:</label>
+                            <input type="text" class="form-input" id="readerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Номер читательского билета:</label>
+                            <input type="text" class="form-input" id="readerCard" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email:</label>
+                            <input type="email" class="form-input" id="readerEmail">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success btn-small">Зарегистрировать</button>
+                            <button type="button" class="btn btn-small" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Регистрация нового читателя', content);
+        }
+        
+        async function addReader() {
+            const name = document.getElementById('readerName').value;
+            const card = document.getElementById('readerCard').value;
+            const email = document.getElementById('readerEmail').value;
+            
+            try {
+                const response = await fetch('/api/readers/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        full_name: name,
+                        library_card: card,
+                        email: email || null
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Читатель "${result.full_name}" успешно зарегистрирован! Номер билета: ${result.library_card}`);
+                    closeModal();
+                    loadStatistics();
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.detail || 'Не удалось зарегистрировать читателя'}`);
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        }
+        
+        function openBlockReaderModal() {
+            const content = `
+                <div>
+                    <p>Заблокировать читателя:</p>
+                    <form id="blockReaderForm" onsubmit="event.preventDefault(); blockReader();">
+                        <div class="form-group">
+                            <label class="form-label">ID читателя:</label>
+                            <input type="number" class="form-input" id="blockReaderId" required min="1">
+                        </div>
+                        <p style="color: #e74c3c; font-size: 0.9rem; margin-bottom: 1rem;">
+                            ⚠️ Заблокированный читатель не сможет брать новые книги
+                        </p>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-warning btn-small">Заблокировать</button>
+                            <button type="button" class="btn btn-small" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Блокировка читателя', content);
+        }
+        
+        async function blockReader() {
+            const readerId = document.getElementById('blockReaderId').value;
+            
+            try {
+                const response = await fetch(`/api/readers/${readerId}/block`, {
+                    method: 'PATCH'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Читатель "${result.full_name}" заблокирован!`);
+                    closeModal();
+                    loadStatistics();
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.detail || 'Не удалось заблокировать читателя'}`);
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        }
+        
+        function openLoanBookModal() {
+            const content = `
+                <div>
+                    <p>Выдать книгу читателю:</p>
+                    <form id="loanBookForm" onsubmit="event.preventDefault(); loanBook();">
+                        <div class="form-group">
+                            <label class="form-label">ID экземпляра книги:</label>
+                            <input type="number" class="form-input" id="copyId" required min="1" placeholder="Инвентарный номер">
+                            <small style="color: #7f8c8d;">Узнать ID можно в разделе "Все экземпляры"</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ID читателя:</label>
+                            <input type="number" class="form-input" id="loanReaderId" required min="1">
+                            <small style="color: #7f8c8d;">Узнать ID можно в разделе "Список читателей"</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Срок выдачи (дней):</label>
+                            <input type="number" class="form-input" id="loanDays" value="14" min="1" max="90">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success btn-small">Выдать книгу</button>
+                            <button type="button" class="btn btn-small" onclick="closeModal()">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            openModal('Выдача книги', content);
+        }
+        
+        async function loanBook() {
+            const copyId = document.getElementById('copyId').value;
+            const readerId = document.getElementById('loanReaderId').value;
+            const loanDays = document.getElementById('loanDays').value;
+            
+            try {
+                const response = await fetch('/api/loans/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        copy_id: parseInt(copyId),
+                        reader_id: parseInt(readerId),
+                        loan_days: parseInt(loanDays)
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Книга "${result.book_title}" выдана читателю "${result.reader_name}"!\nСрок возврата: ${new Date(result.due_date).toLocaleDateString()}`);
+                    closeModal();
+                    loadStatistics();
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.detail || 'Не удалось выдать книгу'}`);
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        }
+        
+        // Другие модальные окна (упрощенные версии)
+        function openSearchModal(type) {
+            const content = `
+                <div>
+                    <p>Для поиска ${type === 'book' ? 'книг' : 'читателей'} перейдите в документацию:</p>
+                    <div style="margin: 1rem 0;">
+                        <a href="/docs#/${type === 'book' ? 'Книги' : 'Читатели'}/get_api_${type === 'book' ? 'books' : 'readers'}_search_" 
+                           target="_blank" class="btn" style="text-align: center;">
+                            Открыть поиск
+                        </a>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-small" onclick="closeModal()">Закрыть</button>
+                    </div>
+                </div>
+            `;
+            openModal(`Поиск ${type === 'book' ? 'книг' : 'читателей'}`, content);
+        }
+        
+        function openEditBookModal() {
+            const content = `
+                <div>
+                    <p>Для редактирования книги перейдите в документацию:</p>
+                    <div style="margin: 1rem 0;">
+                        <a href="/docs#/Книги/put_api_books__book_id_" 
+                           target="_blank" class="btn" style="text-align: center;">
+                            Открыть редактирование
+                        </a>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-small" onclick="closeModal()">Закрыть</button>
+                    </div>
+                </div>
+            `;
+            openModal('Редактирование книги', content);
+        }
+        
+        // Добавьте остальные функции для других модальных окон по аналогии
+        
+        // Загрузка статистики при открытии страницы
+        document.addEventListener('DOMContentLoaded', loadStatistics);
+        
+        // Обновление статистики каждые 60 секунд
+        setInterval(loadStatistics, 60000);
+        
+        // Обработка нажатия Enter в поле поиска
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // Закрытие модального окна по клику вне его
+        document.addEventListener('click', function(event) {
+            const modal = document.querySelector('.modal');
+            const modalContent = document.querySelector('.modal-content');
+            
+            if (modal && event.target === modal && !modalContent.contains(event.target)) {
+                closeModal();
+            }
+        });
     </script>
 </body>
 </html>
