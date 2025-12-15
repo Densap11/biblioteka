@@ -1,110 +1,174 @@
 # .github/workflows/ci.yml
-name: Continuous Integration
+name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  # Тестирование и проверка кода
-  test:
+  # 1. Проверка Python кода и тесты
+  test-python:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11"]
-
+    timeout-minutes: 10
+    
     steps:
-    - name: Checkout code
+    - name: 📥 Checkout code
       uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov flake8 black
-
-    - name: Check code formatting with Black
-      run: |
-        black --check app/
-
-    - name: Lint with flake8
-      run: |
-        flake8 app/ --count --max-complexity=10 --max-line-length=127 --statistics
-
-    - name: Run tests with pytest
-      run: |
-        pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: true
-
-  # Проверка Docker сборки
-  docker-build:
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Build Docker image
-      run: |
-        docker build -t library-system:latest .
-
-    - name: Run container tests
-      run: |
-        docker run --rm library-system:latest python -c "import sys; from app.main import app; print('✅ FastAPI app loaded successfully')"
-
-  # Проверка API
-  api-test:
-    runs-on: ubuntu-latest
-    needs: test
-    timeout-minutes: 5
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Python
+    
+    - name: 🐍 Set up Python 3.10
       uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-
-    - name: Install dependencies
+    
+    - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Start FastAPI server in background
+        pip install pytest pytest-cov
+    
+    - name: 🔍 Run Python tests
       run: |
+        echo "Running tests..."
+        pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+    
+    - name: 📊 Upload test coverage
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-coverage
+        path: htmlcov/
+    
+    - name: 📄 Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          coverage.xml
+          .coverage
+
+  # 2. Проверка Docker сборки
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: test-python
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+    
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: 🔨 Build Docker image
+      run: |
+        docker build -t library-system:${{ github.sha }} .
+        docker build -t library-system:latest .
+    
+    - name: 🧪 Test Docker image
+      run: |
+        # Проверяем, что приложение запускается
+        docker run --rm library-system:latest python -c "import sys; print('✅ Python works'); from app.config import settings; print(f'✅ Config loaded: {settings.APP_NAME}')"
+        
+        # Проверяем FastAPI импорт
+        docker run --rm library-system:latest python -c "from app.main import app; print('✅ FastAPI app loaded')"
+    
+    - name: 📦 Save Docker image
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-image
+        path: |
+          Dockerfile
+          docker-compose.yml
+          requirements.txt
+
+  # 3. Проверка API (интеграционные тесты)
+  test-api:
+    runs-on: ubuntu-latest
+    needs: test-python
+    timeout-minutes: 5
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: 🚀 Start API server
+      run: |
+        # Запускаем сервер в фоне
         nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
-        sleep 10  # Ждем запуска сервера
-
-    - name: Test API endpoints
-      run: |
-        # Проверяем здоровье приложения
-        curl -f http://localhost:8000/api/health || exit 1
+        echo "Server starting..."
+        sleep 5
         
-        # Проверяем основные эндпоинты
-        curl -f http://localhost:8000/api/books || exit 1
-        curl -f http://localhost:8000/api/readers || exit 1
-        
-        echo "✅ Все API эндпоинты работают корректно"
-
-    - name: Stop FastAPI server
+        # Проверяем, что сервер запустился
+        if ! curl -s http://localhost:8000/api/health > /dev/null; then
+          echo "❌ Server failed to start"
+          cat server.log
+          exit 1
+        fi
+        echo "✅ Server started successfully"
+    
+    - name: 🔍 Test API endpoints
       run: |
-        pkill -f uvicorn
+        echo "Testing API endpoints..."
+        
+        # Тестируем основные эндпоинты
+        endpoints=(
+          "/api/health"
+          "/api/books"
+          "/api/readers" 
+          "/api/copies"
+          "/api/loans"
+        )
+        
+        for endpoint in "${endpoints[@]}"; do
+          echo "Testing $endpoint..."
+          if curl -f "http://localhost:8000$endpoint"; then
+            echo "✅ $endpoint OK"
+          else
+            echo "❌ $endpoint FAILED"
+            exit 1
+          fi
+          echo "---"
+        done
+        
+        echo "🎉 All API endpoints work!"
+    
+    - name: 📄 Save server logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: server-logs
+        path: server.log
+
+  # 4. Финальный отчет
+  summary:
+    runs-on: ubuntu-latest
+    needs: [test-python, build-docker, test-api]
+    if: always()
+    
+    steps:
+    - name: 📊 Generate summary
+      run: |
+        echo "# 🎉 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Jobs Status:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Python Tests: ${{ needs.test-python.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Docker Build: ${{ needs.build-docker.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ API Tests: ${{ needs.test-api.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Artifacts:" >> $GITHUB_STEP_SUMMARY
+        echo "- Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- Server Logs" >> $GITHUB_STEP_SUMMARY

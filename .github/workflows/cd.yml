@@ -1,79 +1,110 @@
 # .github/workflows/cd.yml
-name: Continuous Deployment
+name: CD Pipeline
 
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
+  workflow_dispatch:  # Позволяет запускать вручную
 
 jobs:
-  # Сборка и публикация Docker образа
-  build-and-push:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Extract metadata for Docker
-      id: meta
-      uses: docker/metadata-action@v4
-      with:
-        images: ${{ secrets.DOCKER_USERNAME }}/library-system
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=sha,prefix={{branch}}-
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-  # Деплой на сервер (если есть)
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main'
     
     steps:
-    - name: Deploy to server via SSH
-      uses: appleboy/ssh-action@v0.1.5
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+    
+    - name: 🐳 Build and push to Docker Hub
+      if: github.event_name == 'push' || github.event.inputs.deploy == 'true'
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        # Логиним в Docker Hub (если есть credentials)
+        if [ -n "$DOCKER_USERNAME" ] && [ -n "$DOCKER_PASSWORD" ]; then
+          echo "Logging in to Docker Hub..."
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          
+          # Собираем и пушим образ
+          docker build -t $DOCKER_USERNAME/library-system:latest .
+          docker push $DOCKER_USERNAME/library-system:latest
+          
+          echo "✅ Image pushed to Docker Hub"
+        else
+          echo "⚠️ Docker Hub credentials not set, skipping push"
+          echo "Building local image only..."
+          docker build -t library-system:latest .
+        fi
+    
+    - name: 📦 Generate deployment package
+      run: |
+        # Создаем пакет для деплоя
+        mkdir -p deploy-package
+        cp -r app/ deploy-package/
+        cp requirements.txt deploy-package/
+        cp Dockerfile deploy-package/
+        cp docker-compose.yml deploy-package/
+        cp .env.example deploy-package/.env
+        
+        # Создаем скрипт запуска
+        cat > deploy-package/start.sh << 'EOF'
+        #!/bin/bash
+        echo "Starting Library System..."
+        
+        # Создаем виртуальное окружение
+        python -m venv venv
+        source venv/bin/activate
+        
+        # Устанавливаем зависимости
+        pip install -r requirements.txt
+        
+        # Запускаем сервер
+        uvicorn app.main:app --host 0.0.0.0 --port 8000
+        EOF
+        
+        chmod +x deploy-package/start.sh
+        
+        # Создаем README
+        cat > deploy-package/README.md << 'EOF'
+        # Библиотечная система
+        
+        ## Запуск
+        
+        ### Вариант 1: Через Python
+        ```bash
+        ./start.sh
+        ```
+        
+        ### Вариант 2: Через Docker
+        ```bash
+        docker-compose up -d
+        ```
+        
+        ## Доступ
+        - Веб-интерфейс: http://localhost:8000
+        - API Документация: http://localhost:8000/docs
+        ```
+        
+        zip -r deploy-package.zip deploy-package/
+    
+    - name: 📤 Upload deployment package
+      uses: actions/upload-artifact@v3
       with:
-        host: ${{ secrets.DEPLOY_HOST }}
-        username: ${{ secrets.DEPLOY_USER }}
-        key: ${{ secrets.DEPLOY_SSH_KEY }}
-        script: |
-          # Обновляем код на сервере
-          cd /opt/library-system
-          
-          # Останавливаем текущие контейнеры
-          docker-compose down
-          
-          # Тянем последний образ
-          docker pull ${{ secrets.DOCKER_USERNAME }}/library-system:main
-          
-          # Запускаем обновленные контейнеры
-          docker-compose up -d --remove-orphans
-          
-          # Очищаем старые образы
-          docker system prune -f
-          
-          echo "✅ Приложение успешно обновлено"
+        name: deploy-package
+        path: deploy-package.zip
+    
+    - name: 📊 Deployment summary
+      run: |
+        echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Artifacts:" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker image built" >> $GITHUB_STEP_SUMMARY
+        echo "- Deployment package generated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Next steps:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download deploy-package artifact" >> $GITHUB_STEP_SUMMARY
+        echo "2. Extract and run ./start.sh" >> $GITHUB_STEP_SUMMARY
+        echo "3. Or use Docker: docker-compose up -d" >> $GITHUB_STEP_SUMMARY
