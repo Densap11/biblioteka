@@ -8,7 +8,7 @@ from app.models.loan import Loan
 from app.models.copy import Copy
 from app.models.reader import Reader
 from app.models.book import Book
-from app.schemas.loan import LoanCreate, LoanInDB, LoanUpdate
+from app.schemas.loan import LoanCreate, LoanInDB
 
 router = APIRouter()
 

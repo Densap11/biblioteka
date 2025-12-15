@@ -1,10 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date, timedelta
+from datetime import date
 from app.models.loan import Loan
 from app.models.copy import Copy
-from app.models.reader import Reader
-from app.models.book import Book
 
 def get_loan(db: Session, loan_id: int) -> Optional[Loan]:
     return db.query(Loan).filter(Loan.id == loan_id).first()

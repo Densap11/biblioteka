@@ -6,7 +6,6 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.main import app
-from app.config import settings
 
 # Тестовая база данных в памяти
 TEST_DATABASE_URL = "sqlite:///:memory:"
