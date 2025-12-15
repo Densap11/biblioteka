@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Библиотечная система</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #28a745;
+        }
+        
+        .endpoints {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .endpoint-card {
+            background: #f1f3f5;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: #333;
+        }
+        
+        .endpoint-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            background: #e9ecef;
+        }
+        
+        .endpoint-card h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .endpoint-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #28a745;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        
+        .api-docs {
+            margin-top: 30px;
+            padding: 15px;
+            background: #e7f5ff;
+            border-radius: 10px;
+        }
+        
+        .api-docs a {
+            color: #228be6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .api-docs a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Библиотечная система</h1>
+        
+        <div class="status">
+            <h2>Система работает ✅</h2>
+            <p>Версия: {{ app_name }} v1.0.0</p>
+            <p>База данных: SQLite</p>
+            <p>Статус: <span style="color: green;">● Онлайн</span></p>
+        </div>
+        
+        <h2>Доступные эндпоинты API</h2>
+        
+        <div class="endpoints">
+            <a href="/api/health" class="endpoint-card">
+                <h3>Health Check</h3>
+                <p>Проверка состояния системы</p>
+                <span class="badge">GET /api/health</span>
+            </a>
+            
+            <a href="/api/books" class="endpoint-card">
+                <h3>Список книг</h3>
+                <p>Получить все книги из базы</p>
+                <span class="badge">GET /api/books</span>
+            </a>
+            
+            <a href="/api/test-db" class="endpoint-card">
+                <h3>Тест БД</h3>
+                <p>Проверка подключения к базе</p>
+                <span class="badge">GET /api/test-db</span>
+            </a>
+            
+            <a href="/api/models-check" class="endpoint-card">
+                <h3>Проверка моделей</h3>
+                <p>Статус загрузки моделей</p>
+                <span class="badge">GET /api/models-check</span>
+            </a>
+        </div>
+        
+        <div class="api-docs">
+            <h3>📖 Документация API</h3>
+            <p>Полная документация доступна по ссылкам:</p>
+            <p>
+                <a href="/docs" target="_blank">Swagger UI документация</a> |
+                <a href="/redoc" target="_blank">ReDoc документация</a>
+            </p>
+        </div>
+        
+        <div style="margin-top: 30px; color: #6c757d; font-size: 0.9rem;">
+            <p>Курсовая работа: "Разработка информационной системы управления библиотечным фондом"</p>
+            <p>Система включает: управление книгами, читателями, выдачами и сотрудниками</p>
+        </div>
+    </div>
+    
+    <script>
+        // Простой JavaScript для динамического обновления статуса
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                console.log('Система работает:', data);
+            } catch (error) {
+                console.error('Ошибка проверки:', error);
+            }
+        }
+        
+        // Проверяем при загрузке страницы
+        document.addEventListener('DOMContentLoaded', checkHealth);
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Основные
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-dotenv==1.0.0
+
+# База данных
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+
+# Валидация
+pydantic==2.5.0
+pydantic-settings==2.1.0
+email-validator==2.1.0  # Добавили
+
+# Тестирование
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.1
+
+# Дополнительно
+jinja2==3.1.2
+python-multipart==0.0.6
