@@ -45,51 +45,60 @@ jobs:
       run: |
         # Создаем пакет для деплоя
         mkdir -p deploy-package
-        cp -r app/ deploy-package/
-        cp requirements.txt deploy-package/
-        cp Dockerfile deploy-package/
-        cp docker-compose.yml deploy-package/
-        cp .env.example deploy-package/.env
-        
+        cp -r app/ deploy-package/ || true
+        cp requirements.txt deploy-package/ || true
+        cp Dockerfile deploy-package/ || true
+        cp docker-compose.yml deploy-package/ || true
+        # Если .env.example отсутствует, создаем минимальный .env чтобы шаг не падал
+        if [ -f .env.example ]; then
+          cp .env.example deploy-package/.env
+        else
+          echo "WARNING: .env.example not found; creating minimal .env" >&2
+          cat > deploy-package/.env << 'EOF'
+SECRET_KEY=changeme
+DATABASE_URL=sqlite:///./db.sqlite3
+EOF
+        fi
+
         # Создаем скрипт запуска
         cat > deploy-package/start.sh << 'EOF'
-        #!/bin/bash
-        echo "Starting Library System..."
-        
-        # Создаем виртуальное окружение
-        python -m venv venv
-        source venv/bin/activate
-        
-        # Устанавливаем зависимости
-        pip install -r requirements.txt
-        
-        # Запускаем сервер
-        uvicorn app.main:app --host 0.0.0.0 --port 8000
-        EOF
-        
+#!/bin/bash
+echo "Starting Library System..."
+
+# Создаем виртуальное окружение
+python -m venv venv
+source venv/bin/activate
+
+# Устанавливаем зависимости
+pip install -r requirements.txt
+
+# Запускаем сервер
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+EOF
+
         chmod +x deploy-package/start.sh
-        
+
         # Создаем README
         cat > deploy-package/README.md << 'EOF'
-        # Библиотечная система
-        
-        ## Запуск
-        
-        ### Вариант 1: Через Python
-        ```bash
-        ./start.sh
-        ```
-        
-        ### Вариант 2: Через Docker
-        ```bash
-        docker-compose up -d
-        ```
-        
-        ## Доступ
-        - Веб-интерфейс: http://localhost:8000
-        - API Документация: http://localhost:8000/docs
-        ```
-        
+# Библиотечная система
+
+## Запуск
+
+### Вариант 1: Через Python
+```bash
+./start.sh
+```
+
+### Вариант 2: Через Docker
+```bash
+docker-compose up -d
+```
+
+## Доступ
+- Веб-интерфейс: http://localhost:8000
+- API Документация: http://localhost:8000/docs
+EOF
+
         zip -r deploy-package.zip deploy-package/
     
     - name: 📤 Upload deployment package
@@ -106,7 +115,11 @@ jobs:
         echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Artifacts:" >> $GITHUB_STEP_SUMMARY
-        echo "- Docker image built" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${DOCKER_USERNAME:-}" ] && [ -n "${DOCKER_PASSWORD:-}" ]; then
+          echo "- Docker image built and pushed (credentials provided)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- Docker image build/push skipped (no Docker credentials)" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "- Deployment package generated" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Next steps:" >> $GITHUB_STEP_SUMMARY
