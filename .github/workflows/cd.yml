@@ -1,128 +1,52 @@
-# .github/workflows/cd.yml
-name: CD Pipeline
+name: CD (staged)
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:  # Позволяет запускать вручную
-  workflow_run:
-    workflows: ["CI Pipeline"]
-    types:
-      - completed
+    branches: ["main"]
+  workflow_dispatch: {}
 
 jobs:
-  deploy:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+  build:
+    name: Build Docker image (no push)
     runs-on: ubuntu-latest
-    
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v3
-    
-    - name: 🐳 Build and push to Docker Hub
-      if: github.event_name == 'push' || github.event.inputs.deploy == 'true'
-      env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      run: |
-        # Логиним в Docker Hub (если есть credentials)
-        if [ -n "$DOCKER_USERNAME" ] && [ -n "$DOCKER_PASSWORD" ]; then
-          echo "Logging in to Docker Hub..."
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          
-          # Собираем и пушим образ
-          docker build -t $DOCKER_USERNAME/library-system:latest .
-          docker push $DOCKER_USERNAME/library-system:latest
-          
-          echo "✅ Image pushed to Docker Hub"
-        else
-          echo "⚠️ Docker Hub credentials not set, skipping push"
-          echo "Building local image only..."
-          docker build -t library-system:latest .
-        fi
-    
-    - name: 📦 Generate deployment package
-      run: |
-        # Создаем пакет для деплоя
-        mkdir -p deploy-package
-        cp -r app/ deploy-package/ || true
-        cp requirements.txt deploy-package/ || true
-        cp Dockerfile deploy-package/ || true
-        cp docker-compose.yml deploy-package/ || true
-        # Если .env.example отсутствует, создаем минимальный .env чтобы шаг не падал
-        if [ -f .env.example ]; then
-          cp .env.example deploy-package/.env
-        else
-          echo "WARNING: .env.example not found; creating minimal .env" >&2
-          cat > deploy-package/.env << 'EOF'
-SECRET_KEY=changeme
-DATABASE_URL=sqlite:///./db.sqlite3
-EOF
-        fi
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        # Создаем скрипт запуска
-        cat > deploy-package/start.sh << 'EOF'
-#!/bin/bash
-echo "Starting Library System..."
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-# Создаем виртуальное окружение
-python -m venv venv
-source venv/bin/activate
+      - name: Build image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: ghcr.io/${{ github.repository }}:latest
 
-# Устанавливаем зависимости
-pip install -r requirements.txt
+      - name: Save image artifact (best-effort)
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}:latest
+          docker save $IMAGE -o image.tar || true
 
-# Запускаем сервер
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-EOF
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: image.tar
 
-        chmod +x deploy-package/start.sh
+  deploy:
+    name: Simulated deployment (stub)
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate deployment
+        run: |
+          echo "Simulating deployment to production..."
+          echo "Deployed commit $GITHUB_SHA on $(date)" > deploy.log
 
-        # Создаем README
-        cat > deploy-package/README.md << 'EOF'
-# Библиотечная система
-
-## Запуск
-
-### Вариант 1: Через Python
-```bash
-./start.sh
-```
-
-### Вариант 2: Через Docker
-```bash
-docker-compose up -d
-```
-
-## Доступ
-- Веб-интерфейс: http://localhost:8000
-- API Документация: http://localhost:8000/docs
-EOF
-
-        zip -r deploy-package.zip deploy-package/
-    
-    - name: 📤 Upload deployment package
-      uses: actions/upload-artifact@v4
-      with:
-        name: deploy-package
-        path: deploy-package.zip
-    
-    - name: 📊 Deployment summary
-      run: |
-        echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Artifacts:" >> $GITHUB_STEP_SUMMARY
-        if [ -n "${DOCKER_USERNAME:-}" ] && [ -n "${DOCKER_PASSWORD:-}" ]; then
-          echo "- Docker image built and pushed (credentials provided)" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "- Docker image build/push skipped (no Docker credentials)" >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "- Deployment package generated" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Next steps:" >> $GITHUB_STEP_SUMMARY
-        echo "1. Download deploy-package artifact" >> $GITHUB_STEP_SUMMARY
-        echo "2. Extract and run ./start.sh" >> $GITHUB_STEP_SUMMARY
-        echo "3. Or use Docker: docker-compose up -d" >> $GITHUB_STEP_SUMMARY
+      - name: Upload deploy log
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-log
+          path: deploy.log
